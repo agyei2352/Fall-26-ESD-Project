@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESD Wristband Calculation Report</title>
+<style>
+:root { color-scheme: light; --ink:#17212b; --muted:#526170; --blue:#145d73; --line:#cbd5dc; --panel:#eef5f7; }
+* { box-sizing:border-box; }
+body { max-width:900px; margin:34px auto; padding:0 28px 40px; color:var(--ink); font:15px/1.55 "Segoe UI", Arial, sans-serif; }
+h1,h2,h3 { color:#103c4a; line-height:1.2; }
+h1 { border-bottom:4px solid #68a6a8; padding-bottom:12px; font-size:30px; }
+h2 { margin-top:30px; border-bottom:1px solid var(--line); padding-bottom:6px; font-size:21px; }
+h3 { margin-top:20px; font-size:16px; }
+p,li { max-width:78ch; }
+.meta { color:var(--muted); }
+.callout { background:var(--panel); border-left:4px solid var(--blue); padding:12px 16px; margin:16px 0; }
+.eq { background:#f4f6f7; border:1px solid var(--line); padding:10px 14px; margin:10px 0; font:14px/1.55 Consolas, monospace; white-space:pre-wrap; }
+table { width:100%; border-collapse:collapse; margin:12px 0 20px; font-size:13px; }
+th,td { border:1px solid var(--line); padding:7px 9px; text-align:left; }
+th { background:#e8f0f2; }
+.small { color:var(--muted); font-size:12px; }
+footer { margin-top:32px; border-top:1px solid var(--line); padding-top:10px; color:var(--muted); font-size:12px; }
+@media print { body { max-width:none; margin:0; padding:0; font-size:11pt; } h1 { font-size:23pt; } h2 { break-after:avoid; } table,.eq { break-inside:avoid; } a { color:inherit; text-decoration:none; } }
+</style>
+</head>
+<body>
+<h1>Smart ESD Wristband: Electrical and Waveform Calculations</h1>
+<p class="meta">MATLAB Model | Calculation reference | 9 November 2026</p>
+<div class="callout"><strong>Model scope.</strong> This report documents the bare nRF52840 plus CR2032 design target and the bench-equivalent signal calculations. The source is set to the CR2032's nominal 3.0 V; real cell voltage and current capability vary with age, temperature, and load and are not simulated here. R/C values are illustrative, not calibrated human-skin, fit, or moisture properties. A CR2032 is primary and must never be charged.</div>
+
+<h2>1. Circuit model</h2>
+<p>The pulse travels through a 1 MOhm limit resistor, Nylon A, the modeled skin/contact impedance, and Nylon B. The ADC senses Nylon B relative to MCU ground. A 1 MOhm return resistor connects Nylon B to MCU ground.</p>
+<div class="eq">Vdrive (0 to 3.0 V nominal) -> Rlimit (1 MOhm) -> Nylon A -> [Rskin || Cskin] -> Nylon B / ADC
+                                                               |
+                                                        Rground (1 MOhm)
+                                                               |
+                                                            MCU_GND</div>
+<table>
+<thead><tr><th>Parameter</th><th>Model value</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>Vdrive</td><td>3.0 V nominal</td><td>CR2032-powered pulse model</td></tr>
+<tr><td>Rlimit</td><td>1 MOhm</td><td>Series current-limiting element in the bench model</td></tr>
+<tr><td>Rground</td><td>1 MOhm</td><td>ADC return to MCU ground</td></tr>
+<tr><td>Rskin</td><td>500 kOhm to 40 MOhm</td><td>Resistance sweep used for threshold calculations</td></tr>
+<tr><td>Cskin</td><td>1 nF or 10 nF</td><td>Illustrative parallel capacitance used to study pulse settling</td></tr>
+<tr><td>RC characterization</td><td>75 ms high, about 1.075 s period, 1 us rise/fall</td><td>Waveform characterization only; not used for slow-case status classification. The 0.5 ms / 1 ms screenshot is a separate legacy resistor-only test.</td></tr>
+<tr><td>Resistance classification</td><td>250 ms high, about 1.25 s cycle</td><td>Proposed sample profile with guarded late window; confirm exact SAADC/pulse timing before implementation.</td></tr>
+</tbody>
+</table>
+
+<h2>2. Settled amplitude and resistance</h2>
+<p>At the settled pulse plateau, the capacitor is an open circuit. Rlimit, Rskin, and Rground form a series path, so the current and ADC voltage are:</p>
+<div class="eq">Iplateau = Vdrive / (Rlimit + Rskin + Rground)
+Vplateau = Iplateau * Rground
+         = Vdrive * Rground / (Rlimit + Rskin + Rground)
+
+Rskin = (Vdrive * Rground / Vplateau) - Rlimit - Rground</div>
+<p>For an open resistive path, Vplateau approaches 0 V through Rground. In firmware, a sense value at or below 0.02 V is treated as an invalid/open path.</p>
+
+<h3>Threshold calculations at Vdrive = 3.0 V</h3>
+<table>
+<thead><tr><th>Rskin</th><th>Vplateau calculation/result</th><th>12-bit ADC count (3.6 V SAADC full scale)</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>500 kOhm</td><td>3.0 * 1M / (1M + 0.5M + 1M) = 1.200 V</td><td>1365</td><td>Good</td></tr>
+<tr><td>1 MOhm</td><td>3.0 * 1M / (1M + 1M + 1M) = 1.000 V</td><td>1138</td><td>Good</td></tr>
+<tr><td>2 MOhm</td><td>3.0 * 1M / (1M + 2M + 1M) = 0.7500 V</td><td>853</td><td>Good</td></tr>
+<tr><td>5 MOhm</td><td>3.0 * 1M / (1M + 5M + 1M) = 0.4286 V</td><td>488</td><td>Warning</td></tr>
+<tr><td>10 MOhm</td><td>3.0 * 1M / (1M + 10M + 1M) = 0.2500 V</td><td>284</td><td>Warning</td></tr>
+<tr><td>20 MOhm</td><td>3.0 * 1M / (1M + 20M + 1M) = 0.1364 V</td><td>155</td><td>Warning</td></tr>
+<tr><td>35 MOhm</td><td>3.0 * 1M / (1M + 35M + 1M) = 0.0811 V</td><td>92</td><td>Warning</td></tr>
+<tr><td>40 MOhm</td><td>3.0 * 1M / (1M + 40M + 1M) = 0.0714 V</td><td>81</td><td>Fail</td></tr>
+<tr><td>Open</td><td>0 V at the settled plateau</td><td>0</td><td>Fail</td></tr>
+</tbody>
+</table>
+<p class="small">ADC count assumption: round((Vplateau / 3.6) * 4095), corresponding to the firmware's assumed 0.6 V internal SAADC reference and 1/6 gain. Verify the actual SAADC reference, gain, resolution, and calibration in the selected bare-SoC firmware. The 3.0 V value is pulse supply voltage, not ADC full scale.</p>
+
+<h2>3. RC edge and settling calculations</h2>
+<p>For the capacitor in parallel with Rskin, the initial rising-edge voltage is calculated with Cskin acting as a short at t = 0+:</p>
+<div class="eq">Vinitial = Vdrive * Rground / (Rlimit + Rground)
+         = 3.0 * 1M / (1M + 1M) = 1.500 V
+
+Rth = Rskin || (Rlimit + Rground)
+    = Rskin * (Rlimit + Rground) / (Rskin + Rlimit + Rground)
+
+tau = Rth * Cskin
+Vadc(t) = Vplateau + (Vinitial - Vplateau) * exp(-t / tau)
+EdgeDrop(t) = Vadc(t) - Vplateau
+Tsettle_5%_transient = -ln(0.05) * tau = 2.9957 * tau
+Tsettle_5%_final = -tau * ln(0.05 * Vplateau / abs(Vinitial - Vplateau))</div>
+<p>These are different criteria. For 40 MOhm / 10 nF, 57.06 ms reduces the transient to 5% of its initial amplitude, but the sense voltage is not within 5% of the much smaller final plateau until about 114.12 ms.</p>
+<table>
+<thead><tr><th>Scenario</th><th>Rskin</th><th>Cskin</th><th>tau</th><th>5% transient decay</th><th>5% final-value settling</th><th>Vearly at 25 us</th><th>Vplateau</th><th>Early-to-plateau drop</th></tr></thead>
+<tbody>
+<tr><td>Baseline</td><td>500 kOhm</td><td>1 nF</td><td>0.400 ms</td><td>1.198 ms</td><td>0.644 ms</td><td>1.482 V</td><td>1.200 V</td><td>0.282 V</td></tr>
+<tr><td>Higher resistance</td><td>5 MOhm</td><td>1 nF</td><td>1.429 ms</td><td>4.280 ms</td><td>5.589 ms</td><td>1.481 V</td><td>0.429 V</td><td>1.053 V</td></tr>
+<tr><td>Higher capacitance</td><td>500 kOhm</td><td>10 nF</td><td>4.000 ms</td><td>11.983 ms</td><td>6.438 ms</td><td>1.498 V</td><td>1.200 V</td><td>0.298 V</td></tr>
+<tr><td>Worst-case RC</td><td>40 MOhm</td><td>10 nF</td><td>19.048 ms</td><td>57.062 ms</td><td>114.123 ms</td><td>1.498 V</td><td>0.0714 V</td><td>1.427 V</td></tr>
+</tbody>
+</table>
+<p>Increasing Rskin lowers the settled amplitude and also changes tau. Increasing Cskin at fixed Rskin leaves the DC plateau unchanged but increases the settling time. This model therefore separates amplitude and transient features for analysis; it does not prove which real-world condition caused a change.</p>
+<p>The initial manual Multisim screenshot used a 0.5 ms high / 1 ms period. That fast profile is only a resistor-only functional demonstration; it cannot represent the slow RC settling shown above. Label plots and results with the profile used.</p>
+
+<h3>Discrete sample-window check: 40 MOhm / 10 nF</h3>
+<p>For 50 triggers spaced 250 us apart and a provisional 40 us SAADC acquisition, trigger the characterization samples from 62.50 to 74.75 ms and classification samples from 237.50 to 249.75 ms. The final captures are modeled complete at 74.79 ms and 249.79 ms, respectively. The 250 ms pulse therefore has 0.21 ms margin before its falling edge, subject to verification of actual SAADC and pulse-driver timing.</p>
+<table>
+<thead><tr><th>Profile</th><th>Trigger window</th><th>Final capture complete</th><th>50-sample mean</th><th>Inferred resistance</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>75 ms characterization</td><td>62.50-74.75 ms</td><td>74.79 ms</td><td>0.11097 V</td><td>25.034 MOhm</td><td>Warning (not classification)</td></tr>
+<tr><td>250 ms classification</td><td>237.50-249.75 ms</td><td>249.79 ms</td><td>0.071433 V</td><td>39.998 MOhm</td><td>Fail</td></tr>
+</tbody>
+</table>
+<p class="small">The 40 us acquisition is provisional, not validated for the 1 MOhm source impedance. Verify it against the exact nRF52840 SAADC configuration before relying on this timing margin.</p>
+
+<h2>4. Status and waveform interpretation</h2>
+<ul>
+<li>Green / Good: connected-path resistance below 5 MOhm.</li>
+<li>Yellow / Warning: 5 MOhm through 35 MOhm, inclusive.</li>
+<li>Red / Fail: resistance above 35 MOhm or an open/invalid path.</li>
+<li>Early voltage, edge drop, and settling time are logged for analysis, but are not currently used to label fit or moisture.</li>
+</ul>
+<div class="callout"><strong>Interpretation limit.</strong> Fit, sweat/moisture, contact area, pressure, movement, and wiring parasitics may all affect measured impedance or waveform features. Separate fit/moisture classification requires controlled experiments, independent labels, repeatability analysis, and calibration. The illustrative capacitor values must not be presented as measured skin properties.</div>
+
+<h2>5. MATLAB integration</h2>
+<p>The script <code>esd_wristband_status_model.m</code> calculates the settled threshold table and the RC waveform feature table. On each run it exports:</p>
+<ul>
+<li><code>ESD_Wristband_Status_Calculations.csv</code></li>
+<li><code>ESD_Wristband_Waveform_Calculations.csv</code></li>
+</ul>
+<p>These output tables are written beside the MATLAB script and can be used to compare future measurements. Change one model parameter at a time when investigating sensitivity.</p>
+
+<footer>Calculation reference for the current prototype model. Verify all component values, ADC reference, board pin mapping, pulse timing, and safety requirements before hardware use.</footer>
+</body>
+</html>

@@ -1,0 +1,32 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "d0e1c68e-1111-2222-3333-cdef01234567")
+	(paper "A3")
+	(title_block
+		(title "ESD Wristband Monitor (Bare nRF52840-QIAA)")
+		(date "2026-11-11")
+		(rev "1.0")
+		(company "ESD Wristband Project")
+		(comment 1 "Phase 1 Baseline Design: 3.0V Pulse -> 1M Series -> Contacts -> 1M Return -> GND")
+		(comment 2 "CR2032 Primary Cell (No Charging Circuit)")
+	)
+	(lib_symbols
+	)
+	(text "ESD WRISTBAND MONITOR SCHEMATIC ARCHITECTURE\nBare nRF52840-QIAA (aQFN-73)\n\n1. Power: CR2032 (3.0V) -> VDD & VDDH shorted (Normal Voltage Mode)\n2. Decoupling: C_bulk (4.7uF), C7-C11 (100nF), C5 (DEC1 100nF), C3 (DEC3 100pF), C4 (DEC4/6 1.0uF)\n3. Clocks: X1 (32MHz) + C1/C2 (12pF), X2 (32.768kHz) + C14/C15 (12pF)\n4. RF: ANT (Pin H23) -> L1 (3.9nH) -> C12 (1.2pF) / C13 (1.5pF) -> 50-Ohm Inverted-F Antenna\n5. Sensor: P0.13 Pulse -> R_limit (1M) -> Contact A -> Skin -> Contact B -> AIN0 / R_ground (1M) -> GND\n6. Indicators: P0.14 (Green/Good), P0.15 (Yellow/Warn), P0.16 (Red/Fail) via 1.5k resistors\n7. Programming: SWD Header (VDD, SWDIO, SWDCLK, RESET, GND) + Test Points"
+		(at 38.1 38.1 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+			)
+			(justify left top)
+		)
+		(uuid "txt-0001")
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)

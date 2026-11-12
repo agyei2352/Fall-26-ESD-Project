@@ -1,0 +1,27 @@
+* Exploratory ESD wristband pulse/RC bench model
+* Rskin and Cskin are illustrative skin/contact substitutes, not validated human parameters.
+* Never connect this grounded simulation to a person.
+
+* 0-to-3.0 V nominal CR2032 RC-characterization pulse: 75 ms high, ~1.075 s period
+Vdrive N_PULSE MCU_GND PULSE(0 3.0 0 1u 1u 75m 1075m)
+
+* Measurement path: pulse -> Rlimit -> Nylon A -> skin -> Nylon B / ADC
+Rlimit N_PULSE N_NYLON_A 1MEG
+Rskin N_NYLON_A N_NYLON_B 500k
+Cskin N_NYLON_A N_NYLON_B 1n
+
+* Nylon B is the ADC sense node. The wristband return connects to MCU_GND through Rground.
+* This distinct return resistor makes an open-circuit ADC node read 0 V.
+Rground N_NYLON_B MCU_GND 1MEG
+
+* Scope points:
+* CH A+ = N_PULSE, CH A- = MCU_GND (drive pulse)
+* CH B+ = N_NYLON_B, CH B- = MCU_GND (Nylon B / ADC response)
+* Plot V(N_PULSE)-V(N_NYLON_B) to view the drop across Rlimit and Rskin.
+* MCU_GND is the circuit reference; do not attach a scope ground clip to either nylon contact.
+
+* Sweep Rskin through 500k, 1MEG, 2MEG, 5MEG, 10MEG, 20MEG, 35MEG, 40MEG
+* and Cskin through 1n, 10n.
+* Remove Cskin for the resistor-only baseline; change one parameter at a time.
+.tran 0 80m 0 10u
+.end

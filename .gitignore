@@ -1,0 +1,51 @@
+# ==============================================================================
+# Git Ignore Configuration - Smart ESD Wristband Monitor
+# ==============================================================================
+
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*.tmp
+
+# VS Code & Editor Temp Files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.swp
+*~
+
+# KiCad EDA Backup & Lock Files
+*-bak
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.kicad_prl
+_autosave-*
+fp-info-cache
+*.lck
+
+# SolidWorks Lock & Temp Files
+~$*
+*.bak
+*.tmp
+*.dump
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+
+# Arduino / Embedded Build Outputs
+build/
+*.hex
+*.elf
+*.o
+*.bin
+

@@ -1,0 +1,3 @@
+Profile,FirstTriggerMs,LastTriggerMs,LastCaptureCompleteMs,AverageSenseVoltageV,InferredResistanceMOhm,ExpectedStatus
+75 ms characterization,62.5,74.75,74.79,0.110971659633541,25.0339292924591,WARNING
+250 ms classification,237.5,249.75,249.79,0.0714326170946213,39.9976212830916,FAIL

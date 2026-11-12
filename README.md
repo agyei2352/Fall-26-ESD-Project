@@ -128,3 +128,10 @@ smart-esd-wristband-monitor/
 - **Inspect Firmware:** Open [`Arduino Code/ESD_Wristband_Firmware.ino`](Arduino%20Code/ESD_Wristband_Firmware.ino) to review the bare nRF52840 register configuration, SAADC sampling, and sleep timing logic.
 - **Inspect PCB Design:** Open `PCB Design/ESD_Wristband_Monitor.kicad_pro` using **KiCad 10** to view schematic sheets, design rules, and copper routing.
 - **Review Circuit SPICE Simulation:** Open `Digital Circuit Data/ESD Impedance Device.ms14` in **NI Multisim 14.3** or inspect the netlist in `Digital Circuit Data/ESD_Wristband_Multisim_Circuit.cir`.
+
+---
+
+## License & Intellectual Property
+
+Copyright &copy; 2026 Prince Agyei. All Rights Reserved.  
+This project and all associated design assets (firmware, schematics, PCB layouts, 3D CAD models, and simulation files) are published strictly for recruiter portfolio review and academic verification. Unauthorized copying, physical fabrication, modification, or commercial distribution is prohibited. See [`LICENSE`](LICENSE) for complete terms.
